@@ -42,7 +42,6 @@ export default function Login({navigation}) {
   const ButtonProfile = (props) => {
     return (
       <TouchableOpacity style={styles.button} onPress={() => handleLogin()}>
-        {/* <FontAwesome5 name="user" size={28} color={colors.primary} /> */}
         <Text style={styles.textName}>
           Acessar minha {`\n`}carteira digital
         </Text>
