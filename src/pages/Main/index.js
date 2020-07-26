@@ -1,9 +1,13 @@
 import React, {useEffect, useState} from 'react';
-import {View, StyleSheet, ScrollView, Text, Image, Slider} from 'react-native';
+import {View, StyleSheet, ScrollView, Text, Image} from 'react-native';
 import {colors} from '../../styles/colors';
+import Slider from '@react-native-community/slider';
+
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 import carteira from '../../assets/carteira.png';
 import divider from '../../assets/divider.png';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 export default function Main({route, navigation}) {
   // const [user, setUser] = useState("");
@@ -30,7 +34,7 @@ export default function Main({route, navigation}) {
           <Image style={{marginTop: 10}} source={divider} />
 
           <Slider
-            style={{width: 250, marginTop: 30, height: 30}}
+            style={{width: 200, marginTop: 30, height: 30}}
             minimumValue={50}
             maximumValue={saldo}
             value={valueToInvest}
@@ -38,12 +42,51 @@ export default function Main({route, navigation}) {
               val < 50 ? setValueToInvest(50) : setValueToInvest(val)
             }
           />
-          <View style={{flexDirection: 'row'}}>
+          <View style={styles.textButton}>
             <Text style={styles.investir}>
               {!!user.saldo && user.saldo > 50
                 ? 'R$ ' + valueToInvest.toFixed(2)
                 : 'Saldo Insuficiente'}
             </Text>
+            <TouchableOpacity
+              disabled={saldo < 50}
+              onPress={() => {}}
+              style={[
+                styles.buttonConfirm,
+                saldo < 50 ? {backgroundColor: '#ccc'} : null,
+              ]}>
+              <Icon name="check" size={24} color={colors.white} />
+            </TouchableOpacity>
+          </View>
+        </View>
+        <View style={styles.card}>
+          <Text style={styles.titleCard}>Deseja Sacar quanto?</Text>
+          <Image style={{marginTop: 10}} source={divider} />
+
+          <Slider
+            style={{width: 200, marginTop: 30, height: 30}}
+            minimumValue={50}
+            maximumValue={saldo}
+            value={valueToGet}
+            onValueChange={(val) =>
+              val < 50 ? setValueToGet(50) : setValueToGet(val)
+            }
+          />
+          <View style={styles.textButton}>
+            <Text style={styles.investir}>
+              {!!user.saldo && user.saldo > 50
+                ? 'R$ ' + valueToGet.toFixed(2)
+                : 'Saldo Insuficiente'}
+            </Text>
+            <TouchableOpacity
+              disabled={saldo < 50}
+              onPress={() => {}}
+              style={[
+                styles.buttonConfirm,
+                saldo < 50 ? {backgroundColor: '#ccc'} : null,
+              ]}>
+              <Icon name="check" size={24} color={colors.white} />
+            </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
@@ -79,7 +122,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: 'black',
-    margin: 30,
+    marginTop: 10,
   },
   titleCard: {
     fontSize: 28,
@@ -95,8 +138,22 @@ const styles = StyleSheet.create({
   },
   investir: {
     fontSize: 24,
-    margin: 30,
     color: colors.black,
     fontWeight: 'bold',
+  },
+  buttonConfirm: {
+    height: 30,
+    width: 30,
+    borderRadius: 15,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  textButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+    width: '80%',
+    justifyContent: 'space-between',
   },
 });
