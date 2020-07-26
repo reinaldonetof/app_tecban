@@ -21,10 +21,16 @@ export default function Main({route, navigation}) {
 
   const saldo = 400.0;
 
+  const handleGetMoney = () => {
+    navigation.navigate('Qrcode');
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Image style={{marginTop: 10, marginLeft: 10}} source={carteira} />
+        <TouchableOpacity onPress={() => navigation.navigate('Wallet')}>
+          <Image style={{marginTop: 10, marginLeft: 10}} source={carteira} />
+        </TouchableOpacity>
         <Text style={styles.titleSaldo}>Meu Saldo</Text>
         <Text style={styles.saldo}>R$ {!!saldo ? saldo.toFixed(2) : 0.0}</Text>
       </View>
@@ -80,7 +86,7 @@ export default function Main({route, navigation}) {
             </Text>
             <TouchableOpacity
               disabled={saldo < 50}
-              onPress={() => {}}
+              onPress={() => handleGetMoney()}
               style={[
                 styles.buttonConfirm,
                 saldo < 50 ? {backgroundColor: '#ccc'} : null,
