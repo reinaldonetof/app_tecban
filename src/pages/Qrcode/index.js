@@ -1,16 +1,32 @@
 import React from 'react';
-import {View, StyleSheet, Text, Image} from 'react-native';
+import {View, StyleSheet, Text, Image, Linking} from 'react-native';
 import {colors} from '../../styles/colors';
 
 import Ionicon from 'react-native-vector-icons/Ionicons';
 
+import api from '../../services/api';
 import qrcode from '../../assets/qrcode.png';
 
 import {TouchableOpacity} from 'react-native-gesture-handler';
 
-export default function Qrcode() {
-  const handleTakeOut = () => {
+export default function Qrcode({route}) {
+  console.log(route.params.valor);
+
+  const handleTakeOut = async () => {
     alert('Aguarde enquanto o caixa processa o pedido');
+    console.log(route.params.valor);
+    await api
+      .post('payment/auth', {
+        value: Number(route.params.valor).toFixed(2),
+        name: 'SaqueSimples',
+        cpf: '11122233345',
+      })
+      .then((response) => {
+        console.log(response.data);
+        const link = response.data.link;
+        Linking.openURL(link);
+      })
+      .catch((error) => console.log(error));
   };
 
   return (

@@ -38,16 +38,28 @@ export default function Login({navigation}) {
           await api
             .post(`account/confirmAuth?code=${token[1]}`)
             .then((result) => {
-              setTokenReceived(token[1]);
-              const accessToken = result.data.access_token;
-              AsyncStorage.setItem('token', accessToken).then(() =>
-                navigation.navigate('Welcome'),
-              );
+              if (result.data.scope === 'openid payments') {
+                console.log('pagamento', result.data.access_token);
+                const accessToken = result.data.access_token;
+                paymentFast(accessToken);
+              } else {
+                setTokenReceived(token[1]);
+                const accessToken = result.data.access_token;
+                AsyncStorage.setItem('token', accessToken).then(() =>
+                  navigation.navigate('Welcome'),
+                );
+              }
             });
         }
       }
     });
   }, []);
+
+  const paymentFast = async (fastToken) => {
+    await api
+      .post(`payment?token=${fastToken}`)
+      .then(() => navigation.navigate('TabNavigator', {screen: 'Conta'}));
+  };
 
   const ButtonProfile = (props) => {
     return (

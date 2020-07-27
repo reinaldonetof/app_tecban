@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {View, StyleSheet, ScrollView, Text, Image} from 'react-native';
+import {View, StyleSheet, ScrollView, Text, Image, Linking} from 'react-native';
 import {colors} from '../../styles/colors';
 import Slider from '@react-native-community/slider';
 
@@ -23,7 +23,7 @@ export default function Main({route, navigation}) {
   useFocusEffect(
     React.useCallback(() => {
       if (token && accountId) {
-        handleGetSaldo(accountId);
+        handleGetSaldo(accountId, token);
       }
     }, []),
   );
@@ -31,17 +31,67 @@ export default function Main({route, navigation}) {
   useEffect(() => {
     AsyncStorage.getItem('token').then((val) => {
       setToken(val);
+      const fastToken = val;
       AsyncStorage.getItem('accountId').then(async (value) => {
         setAccountId(value);
         console.log('accountId', accountId, 'token', token);
-        handleGetSaldo(value);
+        handleGetSaldo(value, fastToken);
       });
     });
   }, []);
 
-  const handleGetSaldo = async (val) => {
+  useEffect(() => {
+    Linking.addEventListener('url', async (result) => {
+      if (result) {
+        console.log(result);
+        const reg = new RegExp('code=(.*)[&]');
+        const token = reg.exec(result['url']);
+        if (token[1]) {
+          await api
+            .post(`account/confirmAuth?code=${token[1]}`)
+            .then((result) => {
+              if (result.data.scope === 'openid payments') {
+                console.log('pagamento', result.data.access_token);
+                const accessToken = result.data.access_token;
+                paymentFast(accessToken);
+              } else {
+                setTokenReceived(token[1]);
+                const accessToken = result.data.access_token;
+                AsyncStorage.setItem('token', accessToken).then(() =>
+                  navigation.navigate('Welcome'),
+                );
+              }
+            });
+        }
+      }
+    });
+  }, []);
+
+  const paymentFast = async (fastToken) => {
     await api
-      .get(`account/${val}/balance?token=${token}`)
+      .post(`payment?token=${fastToken}`)
+      .then(() => navigation.navigate('TabNavigator', {screen: 'Conta'}));
+  };
+
+  const handlePayment = async () => {
+    console.log(valueToInvest);
+    await api
+      .post('payment/auth', {
+        value: Number(valueToInvest).toFixed(2),
+        name: 'SaqueSimples',
+        cpf: '11122233345',
+      })
+      .then((response) => {
+        console.log(response.data);
+        const link = response.data.link;
+        Linking.openURL(link);
+      })
+      .catch((error) => console.log(error));
+  };
+
+  const handleGetSaldo = async (val, fastToken) => {
+    await api
+      .get(`account/${val}/balance?token=${fastToken}`)
       .then((result) => {
         const amount = result.data['Data']['Balance'][0]['Amount']['Amount'];
         console.log(result.data['Data']['Balance'][0]['Amount']['Amount']);
@@ -51,7 +101,7 @@ export default function Main({route, navigation}) {
   };
 
   const handleGetMoney = () => {
-    navigation.navigate('Qrcode');
+    navigation.navigate('Qrcode', {valor: valueToGet});
   };
 
   return (
@@ -85,7 +135,7 @@ export default function Main({route, navigation}) {
             </Text>
             <TouchableOpacity
               disabled={saldo < 50}
-              onPress={() => {}}
+              onPress={() => handlePayment()}
               style={[
                 styles.buttonConfirm,
                 saldo < 50 ? {backgroundColor: '#ccc'} : null,
