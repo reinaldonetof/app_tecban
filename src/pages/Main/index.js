@@ -8,18 +8,47 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import carteira from '../../assets/carteira.png';
 import divider from '../../assets/divider.png';
 import {TouchableOpacity} from 'react-native-gesture-handler';
+import AsyncStorage from '@react-native-community/async-storage';
+
+import api from '../../services/api';
+import {useFocusEffect} from '@react-navigation/native';
 
 export default function Main({route, navigation}) {
-  // const [user, setUser] = useState("");
-  // const [saldo, setSaldo] = useState('');
+  const [token, setToken] = useState('');
+  const [accountId, setAccountId] = useState('');
+  const [saldo, setSaldo] = useState(20);
   const [valueToInvest, setValueToInvest] = useState(50);
   const [valueToGet, setValueToGet] = useState(50);
 
-  const user = {
-    saldo: 400.0,
-  };
+  useFocusEffect(
+    React.useCallback(() => {
+      if (token && accountId) {
+        handleGetSaldo(accountId);
+      }
+    }, []),
+  );
 
-  const saldo = 400.0;
+  useEffect(() => {
+    AsyncStorage.getItem('token').then((val) => {
+      setToken(val);
+      AsyncStorage.getItem('accountId').then(async (value) => {
+        setAccountId(value);
+        console.log('accountId', accountId, 'token', token);
+        handleGetSaldo(value);
+      });
+    });
+  }, []);
+
+  const handleGetSaldo = async (val) => {
+    await api
+      .get(`account/${val}/balance?token=${token}`)
+      .then((result) => {
+        const amount = result.data['Data']['Balance'][0]['Amount']['Amount'];
+        console.log(result.data['Data']['Balance'][0]['Amount']['Amount']);
+        setSaldo(Number(amount));
+      })
+      .catch((error) => console.log(error));
+  };
 
   const handleGetMoney = () => {
     navigation.navigate('Qrcode');
@@ -32,7 +61,7 @@ export default function Main({route, navigation}) {
           <Image style={{marginTop: 10, marginLeft: 10}} source={carteira} />
         </TouchableOpacity>
         <Text style={styles.titleSaldo}>Meu Saldo</Text>
-        <Text style={styles.saldo}>R$ {!!saldo ? saldo.toFixed(2) : 0.0}</Text>
+        <Text style={styles.saldo}>R$ {!!saldo ? saldo : 0.0}</Text>
       </View>
       <ScrollView style={{flex: 1}}>
         <View style={styles.card}>
@@ -50,7 +79,7 @@ export default function Main({route, navigation}) {
           />
           <View style={styles.textButton}>
             <Text style={styles.investir}>
-              {!!user.saldo && user.saldo > 50
+              {!!saldo && saldo > 50
                 ? 'R$ ' + valueToInvest.toFixed(2)
                 : 'Saldo Insuficiente'}
             </Text>
@@ -80,7 +109,7 @@ export default function Main({route, navigation}) {
           />
           <View style={styles.textButton}>
             <Text style={styles.investir}>
-              {!!user.saldo && user.saldo > 50
+              {!!saldo && saldo > 50
                 ? 'R$ ' + valueToGet.toFixed(2)
                 : 'Saldo Insuficiente'}
             </Text>

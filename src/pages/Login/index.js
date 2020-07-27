@@ -13,31 +13,41 @@ import AsyncStorage from '@react-native-community/async-storage';
 import MainImg from '../../assets/mainImg.png';
 import {colors} from '../../styles/colors';
 
-const urlForAuthentication =
-  'https://auth1.tecban-sandbox.o3bank.co.uk/auth?client_id=e089644d-8084-4705-ba3b-76d6dd9be143&response_type=code&scope=openid%20accounts&request=eyJhbGciOiJub25lIn0.eyJhdWQiOiJodHRwczovL2F1dGgxLnRlY2Jhbi1zYW5kYm94Lm8zYmFuay5jby51ayIsImV4cCI6MTU5NTc0NDU2My43MzYsImlzcyI6ImUwODk2NDRkLTgwODQtNDcwNS1iYTNiLTc2ZDZkZDliZTE0MyIsInNjb3BlIjoib3BlbmlkIGFjY291bnRzIiwicmVkaXJlY3RfdXJpIjoiaHR0cDovL3d3dy5nb29nbGUuY28udWsiLCJub25jZSI6IjY1NDAzMWUwLWUxOTctNGVhYS1iZTNlLWI2YTNjNmNkOGIwYSIsInN0YXRlIjoiZmJjOTBjM2MtOWMwOC00NTZmLWJmMTAtNzg5MWRhYzcxMDVkIiwiY2xhaW1zIjp7ImlkX3Rva2VuIjp7Im9wZW5iYW5raW5nX2ludGVudF9pZCI6eyJ2YWx1ZSI6ImFhYy1kY2Y0NDc4OS03ZWZjLTRlYTYtOWFiYS1lMDE0ZWY3OTRhODEiLCJlc3NlbnRpYWwiOnRydWV9fX19.';
+import api from '../../services/api';
 
 export default function Login({navigation}) {
   const [tokenReceived, setTokenReceived] = useState('');
 
-  const handleLogin = () => {
-    Linking.openURL(urlForAuthentication).then((result) => {});
+  const handleLogin = async () => {
+    await api
+      .get('account/auth')
+      .then((response) => {
+        const link = response.data.link;
+        Linking.openURL(link);
+      })
+      .catch((error) => console.log(error));
   };
 
   useEffect(() => {
-    Linking.addEventListener('url', (result) => {
+    Linking.addEventListener('url', async (result) => {
       if (result) {
         console.log(result);
         const reg = new RegExp('code=(.*)[&]');
         const token = reg.exec(result['url']);
-        if (token) {
-          setTokenReceived(token);
-          AsyncStorage.setItem('url', result['url']);
-          AsyncStorage.setItem('token', token[1]);
-          navigation.navigate('Welcome');
+        if (token[1]) {
+          await api
+            .post(`account/confirmAuth?code=${token[1]}`)
+            .then((result) => {
+              setTokenReceived(token[1]);
+              const accessToken = result.data.access_token;
+              AsyncStorage.setItem('token', accessToken).then(() =>
+                navigation.navigate('Welcome'),
+              );
+            });
         }
       }
     });
-  });
+  }, []);
 
   const ButtonProfile = (props) => {
     return (

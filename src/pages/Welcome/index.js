@@ -1,13 +1,30 @@
-import React from 'react';
+import React, {useState, useEffect} from 'react';
 import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
 import {colors} from '../../styles/colors';
-
-// import { Container } from './styles';
+import AsyncStorage from '@react-native-community/async-storage';
+import api from '../../services/api';
 
 export default function Welcome({navigation}) {
+  const [accountId, setAccountId] = useState('');
+  const [name, setName] = useState('');
+
+  useEffect(() => {
+    AsyncStorage.getItem('token').then(async (val) => {
+      console.log('token do welcome', val);
+      await api
+        .get(`account/accounts?token=${val}`)
+        .then((result) => {
+          setAccountId(result.data['Data']['Account'][0]['AccountId']);
+        })
+        .catch((error) => console.log(error));
+    });
+  }, []);
+
   const handleChange = (screen) => {
-    navigation.navigate('TabNavigator', {
-      screen,
+    AsyncStorage.setItem('accountId', accountId).then(() => {
+      navigation.navigate('TabNavigator', {
+        screen,
+      });
     });
   };
 

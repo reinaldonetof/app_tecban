@@ -1,14 +1,14 @@
-export const apiPostFetch = (urlComplete, header, data) => {
-  return fetch(`${baseURL}${urlComplete}`, {
-    method: "POST",
-    body: data,
-    headers: header,
-  });
-};
+import axios from 'axios';
+
+const baseURL = 'https://quiet-falls-59912.herokuapp.com/';
+
+export default api = axios.create({
+  baseURL,
+});
 
 export const apiGetFetch = (urlComplete, header, data) => {
-  return fetch(`${urlComplete}`, {
-    method: "GET",
+  return fetch(`${baseURL}${urlComplete}`, {
+    method: 'GET',
     body: data,
     headers: header,
   });

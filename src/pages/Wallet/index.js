@@ -1,26 +1,49 @@
 import React, {useEffect, useState} from 'react';
 import {View, StyleSheet, ScrollView, Text, Image} from 'react-native';
 import {colors} from '../../styles/colors';
-import Slider from '@react-native-community/slider';
+import AsyncStorage from '@react-native-community/async-storage';
 
-import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
 import Ionicon from 'react-native-vector-icons/Ionicons';
 
 import divider from '../../assets/divider.png';
 import icon from '../../assets/icon.png';
 import {TouchableOpacity} from 'react-native-gesture-handler';
+import {useFocusEffect} from '@react-navigation/native';
 
 export default function Main({route, navigation}) {
-  // const [user, setUser] = useState("");
-  // const [saldo, setSaldo] = useState('');
-  const [valueToInvest, setValueToInvest] = useState(50);
-  const [valueToGet, setValueToGet] = useState(50);
+  const [token, setToken] = useState('');
+  const [accountId, setAccountId] = useState('');
+  const [saldo, setSaldo] = useState(20);
 
-  const user = {
-    saldo: 400.0,
+  useFocusEffect(
+    React.useCallback(() => {
+      if (token && accountId) {
+        handleGetSaldo(accountId, token);
+      }
+    }, []),
+  );
+
+  useEffect(() => {
+    AsyncStorage.getItem('token').then((val) => {
+      setToken(val);
+      const fastToken = val;
+      AsyncStorage.getItem('accountId').then(async (value) => {
+        setAccountId(value);
+        handleGetSaldo(value, fastToken);
+      });
+    });
+  }, []);
+
+  const handleGetSaldo = async (val, fastToken) => {
+    await api
+      .get(`account/${val}/balance?token=${fastToken}`)
+      .then((result) => {
+        const amount = result.data['Data']['Balance'][0]['Amount']['Amount'];
+        console.log(result.data['Data']['Balance'][0]['Amount']['Amount']);
+        setSaldo(Number(amount));
+      })
+      .catch((error) => console.log(error));
   };
-
-  const saldo = 400.0;
 
   return (
     <View style={styles.container}>
