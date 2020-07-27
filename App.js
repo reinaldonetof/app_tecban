@@ -10,6 +10,8 @@ import React from 'react';
 
 import Index from './src';
 
+console.disableYellowBox = true;
+
 const App = () => {
   return <Index />;
 };

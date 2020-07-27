@@ -30,7 +30,7 @@ export default function Welcome({navigation}) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Auxílio Fácil</Text>
+      <Text style={styles.title}>Saque Simples</Text>
       <Text style={[styles.title, {fontSize: 30}]}>O que deseja fazer?</Text>
       <Text style={styles.text}>
         Escolha aqui que tipo de operação deseja fazer hoje?

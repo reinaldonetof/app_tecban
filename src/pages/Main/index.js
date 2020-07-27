@@ -28,53 +28,54 @@ export default function Main({route, navigation}) {
     }, []),
   );
 
-  useEffect(() => {
-    AsyncStorage.getItem('token').then((val) => {
-      setToken(val);
-      const fastToken = val;
-      AsyncStorage.getItem('accountId').then(async (value) => {
-        setAccountId(value);
-        console.log('accountId', accountId, 'token', token);
-        handleGetSaldo(value, fastToken);
-      });
-    });
-  }, []);
-
-  useEffect(() => {
-    Linking.addEventListener('url', async (result) => {
-      if (result) {
-        console.log(result);
-        const reg = new RegExp('code=(.*)[&]');
-        const token = reg.exec(result['url']);
-        if (token[1]) {
-          await api
-            .post(`account/confirmAuth?code=${token[1]}`)
-            .then((result) => {
-              if (result.data.scope === 'openid payments') {
-                console.log('pagamento', result.data.access_token);
-                const accessToken = result.data.access_token;
-                paymentFast(accessToken);
-              } else {
-                setTokenReceived(token[1]);
-                const accessToken = result.data.access_token;
-                AsyncStorage.setItem('token', accessToken).then(() =>
-                  navigation.navigate('Welcome'),
-                );
-              }
-            });
-        }
-      }
-    });
-  }, []);
-
   const paymentFast = async (fastToken) => {
     await api
       .post(`payment?token=${fastToken}`)
       .then(() => navigation.navigate('TabNavigator', {screen: 'Conta'}));
   };
 
+  useEffect(() => {
+    AsyncStorage.getItem('token').then((val) => {
+      setToken(val);
+      const fastToken = val;
+      AsyncStorage.getItem('accountId').then(async (value) => {
+        setAccountId(value);
+        handleGetSaldo(value, fastToken);
+      });
+    });
+
+    Linking.addEventListener('url', async (result) => {
+      if (result) {
+        const reg = new RegExp('code=(.*)[&]');
+        const newToken = reg.exec(result['url']);
+        if (newToken[1]) {
+          await api
+            .post(`account/confirmAuth?code=${newToken[1]}`)
+            .then((result) => {
+              if (result.data.scope === 'openid payments') {
+                const accessToken = result.data.access_token;
+                console.log(accountId, token);
+                handleGetSaldo(accountId, token);
+
+                paymentFast(accessToken);
+              } else {
+                setTokenReceived(newToken[1]);
+                const accessToken = result.data.access_token;
+                AsyncStorage.setItem('token', accessToken).then(() =>
+                  navigation.navigate('Welcome'),
+                );
+              }
+            })
+            .catch((erro) => {
+              handleGetSaldo(accountId, token);
+              console.log(erro);
+            });
+        }
+      }
+    });
+  }, []);
+
   const handlePayment = async () => {
-    console.log(valueToInvest);
     await api
       .post('payment/auth', {
         value: Number(valueToInvest).toFixed(2),
@@ -82,7 +83,6 @@ export default function Main({route, navigation}) {
         cpf: '11122233345',
       })
       .then((response) => {
-        console.log(response.data);
         const link = response.data.link;
         Linking.openURL(link);
       })
@@ -94,8 +94,7 @@ export default function Main({route, navigation}) {
       .get(`account/${val}/balance?token=${fastToken}`)
       .then((result) => {
         const amount = result.data['Data']['Balance'][0]['Amount']['Amount'];
-        console.log(result.data['Data']['Balance'][0]['Amount']['Amount']);
-        setSaldo(Number(amount));
+        setSaldo(Number(amount).toFixed(2));
       })
       .catch((error) => console.log(error));
   };
@@ -121,7 +120,7 @@ export default function Main({route, navigation}) {
           <Slider
             style={{width: 200, marginTop: 30, height: 30}}
             minimumValue={50}
-            maximumValue={saldo}
+            maximumValue={Number(saldo)}
             value={valueToInvest}
             onValueChange={(val) =>
               val < 50 ? setValueToInvest(50) : setValueToInvest(val)
@@ -151,7 +150,7 @@ export default function Main({route, navigation}) {
           <Slider
             style={{width: 200, marginTop: 30, height: 30}}
             minimumValue={50}
-            maximumValue={saldo}
+            maximumValue={Number(saldo)}
             value={valueToGet}
             onValueChange={(val) =>
               val < 50 ? setValueToGet(50) : setValueToGet(val)

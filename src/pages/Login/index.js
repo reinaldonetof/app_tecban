@@ -31,7 +31,6 @@ export default function Login({navigation}) {
   useEffect(() => {
     Linking.addEventListener('url', async (result) => {
       if (result) {
-        console.log(result);
         const reg = new RegExp('code=(.*)[&]');
         const token = reg.exec(result['url']);
         if (token[1]) {
@@ -39,9 +38,8 @@ export default function Login({navigation}) {
             .post(`account/confirmAuth?code=${token[1]}`)
             .then((result) => {
               if (result.data.scope === 'openid payments') {
-                console.log('pagamento', result.data.access_token);
-                const accessToken = result.data.access_token;
-                paymentFast(accessToken);
+                // const accessToken = result.data.access_token;
+                // paymentFast(accessToken);
               } else {
                 setTokenReceived(token[1]);
                 const accessToken = result.data.access_token;
@@ -58,7 +56,7 @@ export default function Login({navigation}) {
   const paymentFast = async (fastToken) => {
     await api
       .post(`payment?token=${fastToken}`)
-      .then(() => navigation.navigate('TabNavigator', {screen: 'Conta'}));
+      .then(() => navigation.navigate('TabNavigator'));
   };
 
   const ButtonProfile = (props) => {
@@ -75,7 +73,7 @@ export default function Login({navigation}) {
     <View style={styles.container}>
       <ScrollView style={{flex: 1}}>
         <Image source={MainImg} style={{marginTop: -20, marginLeft: -20}} />
-        <Text style={styles.title}>Auxílio Fácil</Text>
+        <Text style={styles.title}>Saque Simples</Text>
         <Text style={styles.text}>
           O jeito simples de movimentar seu dinheiro, investir e sacar. Sem
           burocracia. Em todos os caixas eletrônicos dos bancos 24h

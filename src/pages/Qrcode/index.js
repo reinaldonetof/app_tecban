@@ -9,12 +9,11 @@ import qrcode from '../../assets/qrcode.png';
 
 import {TouchableOpacity} from 'react-native-gesture-handler';
 
-export default function Qrcode({route}) {
+export default function Qrcode({route, navigation}) {
   console.log(route.params.valor);
 
   const handleTakeOut = async () => {
     alert('Aguarde enquanto o caixa processa o pedido');
-    console.log(route.params.valor);
     await api
       .post('payment/auth', {
         value: Number(route.params.valor).toFixed(2),
